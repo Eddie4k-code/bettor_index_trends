@@ -1,0 +1,85 @@
+---
+description: Write highly descriptive PRs with risk assessment and detailed change breakdowns
+alwaysApply: true
+---
+
+# Pull Request Descriptions
+
+Every PR must give reviewers enough context to assess impact without reading every diff line. Use `gh pr create` with a structured body.
+
+## Required Sections
+
+### Risk Level
+
+State one of **Low**, **Medium**, or **High** and justify it:
+
+| Level | When to use |
+|-------|-------------|
+| **Low** | Tests, docs, logging, isolated refactors with no behavior change |
+| **Medium** | New flags, repository/query changes, new env vars, new sport getter |
+| **High** | Schema migrations, auth/secrets, worker scheduling changes, breaking insight payload shape |
+
+### Summary
+
+2–4 sentences explaining **why** this change exists and the outcome for the Trends feed / worker.
+
+### What Changed
+
+Break down every meaningful area — do not collapse unrelated work into one bullet:
+
+- **Trend getters** — slate loading, `PropBet` mapping, sport wiring
+- **Insight identifiers** — new `_check_*` flags, thresholds, templates
+- **Detectors / renderers** — shared flag logic, headline templates
+- **Repositories / models** — summary reads, trends_insights writes
+- **Worker / main** — poll loop, refresh cadence, dependency wiring
+- **Tests** — new coverage, fixtures, mocked scenarios
+- **Config / infra** — env vars, dependencies, CI
+
+For each item: what was added or modified, and how it connects to existing code.
+
+### Breaking Changes
+
+Explicitly state **None** or list each breaking change with migration steps (especially `TrendInsight` API fields consumed by `bettor_index_rest_Api`).
+
+### Test Plan
+
+Concrete checklist reviewers can follow:
+
+```
+- [ ] Unit tests pass locally (`pytest`)
+- [ ] Manual step: run worker against staging DB and confirm trends rows
+- [ ] Verified no secrets logged / env vars documented
+```
+
+## Example Structure
+
+```markdown
+## Risk Level
+**Medium** — adds `_check_ten_game_hit_rate_is_hot` and persists `mlb_trends_insights`; no change to prop summarizer.
+
+## Summary
+Ships the first Trends vertical slice for MLB: read upcoming summaries, flag props with hot 10G hit rates, render one-liner headlines…
+
+## What Changed
+### Insight identifiers
+- Added `_check_ten_game_hit_rate_is_hot` in `insight_identifiers/mlb_insights_identifier.py`…
+### Trend getters
+- `MlbTrendGetter.get_trends` loads summaries and builds `PropBet`…
+### Tests
+- Added `tests/test_mlb_hot_side_detector.py` with `PropBet` fixtures…
+
+## Breaking Changes
+None.
+
+## Test Plan
+- [ ] `pytest tests/test_mlb_hot_side_detector.py`
+- [ ] `python main.py` against staging; confirm insights rows for known hot props
+```
+
+## Rules
+
+- Review **all commits** on the branch, not just the latest
+- Name files and modules — avoid vague bullets like "updated backend"
+- Call out new env vars (`DATABASE_URL`), migrations, and dependencies on `{sport}_summaries`
+- If scope is large, say what is intentionally **out of scope**
+- Always create a PR for any new feature
