@@ -9,5 +9,5 @@ class MLBTrendGetter(TrendGetter):
         pass
 
 
-    def get_mlb_summaries_from_after_now(self, now_utc: datetime) -> list[MLBSummary]:
+    def get_summaries_from_after_now(self, now_utc: datetime) -> list[MLBSummary]:
         pass

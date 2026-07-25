@@ -11,18 +11,18 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from db.models.mlb_summaries import MLBSummary
-from interfaces.mlb_summary_repository_interface import MlbSummaryRepositoryInterface
+from interfaces.summary_repository_interface import SummaryRepositoryInterface
 
 logger = logging.getLogger(__name__)
 
 
-class MlbSummaryRepository(MlbSummaryRepositoryInterface):
+class MlbSummaryRepository(SummaryRepositoryInterface):
     """PostgreSQL/SQLite read implementation for MLBSummary rows."""
 
     def __init__(self, db: Session):
         self.db = db
 
-    def get_mlb_summaries_from_after_now(self, now_utc: datetime) -> list[MLBSummary]:
+    def get_summaries_from_after_now(self, now_utc: datetime) -> list[MLBSummary]:
         """Return all upcoming summaries ordered by commence_time ascending.
 
         Strict ``>`` excludes games that have already started (including

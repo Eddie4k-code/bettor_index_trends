@@ -30,7 +30,7 @@ Depend on abstractions, not concretions:
 class MlbTrendGetter(TrendGetter):
     def __init__(
         self,
-        summary_repository: MlbSummaryRepositoryInterface,
+        summary_repository: SummaryRepositoryInterface,
         insights_identifier: InsightsIdentifier,
     ):
         self.summary_repository = summary_repository
