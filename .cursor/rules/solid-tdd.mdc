@@ -1,0 +1,74 @@
+---
+description: SOLID design, interfaces/polymorphism, minimal helpers, and TDD workflow
+alwaysApply: true
+---
+
+# SOLID, Interfaces, and TDD
+
+## Test-Driven Development
+
+Always follow red → green → refactor:
+
+1. Write a failing test that describes the desired behavior.
+2. Implement the minimum code to pass.
+3. Refactor while keeping tests green.
+
+Do not add production code without a corresponding test. Mock dependencies via interfaces — never hit real DBs or APIs in unit tests.
+
+Prefer testing `InsightsIdentifier` and shared detectors with `PropBet` fixtures (no DB). Test `TrendGetter` with mocked summary/hit-rate repositories.
+
+## Interfaces and Polymorphism
+
+Depend on abstractions, not concretions:
+
+- Define an ABC in `interfaces/` for every external boundary: repositories, trend getters, insight identifiers, workers.
+- Inject dependencies through constructors typed to the interface.
+- Implementations live in their own modules (`trend_getters/`, `insight_identifiers/`, `repositories/`, `detectors/`).
+
+```python
+# ✅ GOOD — extendable via new sport implementations
+class MlbTrendGetter(TrendGetter):
+    def __init__(
+        self,
+        summary_repository: MlbSummaryRepositoryInterface,
+        insights_identifier: InsightsIdentifier,
+    ):
+        self.summary_repository = summary_repository
+        self.insights_identifier = insights_identifier
+
+# ❌ BAD — hard to test or swap
+class MlbTrendGetter:
+    def __init__(self):
+        self.summary_repository = MlbSummaryRepository(SessionLocal())
+        self.insights_identifier = MLBInsightsIdentifier()
+```
+
+## SOLID (Practical)
+
+| Principle | Rule |
+|-----------|------|
+| **S** | One reason to change per class/module. Split getters, identifiers, repos, and renderers. |
+| **O** | Extend via new sport getters/identifiers — avoid editing call sites for new sports or flags. |
+| **L** | Subclasses must honor the interface contract; don't weaken preconditions or skip side effects callers rely on. |
+| **I** | Small, focused interfaces — `InsightsIdentifier` evaluates one prop; `TrendGetter` orchestrates one sport. |
+| **D** | High-level modules depend on interfaces, not concrete repos or ORM sessions. |
+
+## Avoid Unnecessary Helpers
+
+Do not extract one-off functions that only wrap a single call or rename a variable. Inline simple logic instead.
+
+**Extract only when it earns its keep:**
+
+- Shared across multiple call sites (e.g. `detectors/hot_side.py`)
+- Hides non-obvious domain logic worth naming (headline merge, line resolution)
+- Test fixtures/factories for complex `PropBet` graphs (e.g. `_make_prop_bet()` in tests)
+
+```python
+# ❌ BAD — pointless wrapper
+def get_ten_game_rate(prop: PropBet) -> float | None:
+    return prop.rates.ten_game
+
+# ✅ GOOD — shared detector used by every sport identifier
+def detect_hot_side(prop: PropBet, config: MarketConfig) -> FlagResult | None:
+    ...
+```

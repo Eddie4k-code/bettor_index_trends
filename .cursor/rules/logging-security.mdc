@@ -1,0 +1,44 @@
+---
+description: Never log sensitive information such as API keys, tokens, or credentials
+alwaysApply: true
+---
+
+# Logging Security
+
+Never log sensitive information. Treat logs as potentially visible to operators, aggregators, and support staff.
+
+## Never Log
+
+- API keys, bearer tokens, session cookies, passwords
+- Full request/response headers or query params that include auth
+- Environment variable values for secrets (only log the variable *name* if needed)
+- Database connection strings with credentials (`DATABASE_URL`)
+- PII unless explicitly required and approved
+
+## Safe Patterns
+
+```python
+# ❌ BAD — exposes secret
+logger.debug(f"DATABASE_URL={DATABASE_URL}")
+logger.error(f"Connection failed: {engine.url}")
+
+# ✅ GOOD — redact or omit secrets
+logger.error("Database connection failed; check DATABASE_URL is set")
+logger.info("Refreshing trends for sport_key=%s", sport_key)
+logger.info(
+    "No insight for event_id=%s market_key=%s outcome_description=%s",
+    event_id,
+    market_key,
+    outcome_description,
+)
+```
+
+## When Logging Errors
+
+- Log exception type and message, not full objects that may embed credentials
+- Prefer structured context: `event_id`, `market_key`, `sport_key`, counts — not raw `summary_data` blobs
+- When debugging flag logic, log flag codes and scores — not full ORM rows
+
+## Worker Logging
+
+Use module-level loggers (`logger = logging.getLogger(__name__)`). Log cycle boundaries and skip reasons at INFO; reserve DEBUG for verbose per-prop evaluation during development only.

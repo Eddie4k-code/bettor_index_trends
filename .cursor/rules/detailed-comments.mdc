@@ -1,0 +1,59 @@
+---
+description: Require detailed comments on all functionality (modules, classes, public methods)
+alwaysApply: true
+---
+
+# Detailed Comments on Functionality
+
+When adding or modifying production code, document **what it does, why it exists, and non-obvious behavior** before or alongside the implementation.
+
+## What to Comment
+
+| Layer | Required documentation |
+|-------|------------------------|
+| **Module** | One-line purpose at top; note upstream/downstream role (summaries → PropBet → insights → trends table) |
+| **Class** | Responsibility, dependencies injected, and what callers should expect |
+| **Public methods / functions** | Docstring: purpose, parameters, return value, edge cases (no flag fired, missing hit rate, split market) |
+| **Non-obvious logic** | Inline comment explaining the business rule (e.g. 70% hot threshold, recommended_side selection) |
+
+## What Not to Comment
+
+- Test files (behavior is described by test names and assertions)
+- Trivial one-liners that restate the code (`i += 1  # increment i`)
+- Generated or boilerplate config
+
+## Python Style
+
+Use docstrings for classes and public functions; use inline comments for branching logic and domain rules.
+
+```python
+# ✅ GOOD — module + class + method documented
+"""MLB insight evaluation for a single PropBet.
+
+Runs _check_* detectors and renders a headline when last-10-game hit rate is hot.
+Does not query the DB — TrendGetter supplies PropBet.
+"""
+
+def _check_ten_game_hit_rate_is_hot(self, prop: PropBet) -> FlagResult | None:
+    """Return a hot-side flag when ten_game rate >= 0.70 at the bet line.
+
+    Returns None when rate is missing or below threshold.
+    hits is derived as round(rate * 10) for template copy.
+    """
+```
+
+```python
+# ❌ BAD — no docstring, magic threshold unexplained
+def _check_ten_game_hit_rate_is_hot(self, prop):
+    if prop.rates.ten_game >= 0.70:
+        ...
+```
+
+## Review Checklist
+
+Before finishing a change, confirm:
+
+- [ ] New modules and classes have purpose documented
+- [ ] Every new public method/function has a docstring with edge cases
+- [ ] Domain rules (hit-rate thresholds, side selection, headline merge) are explained in comments
+- [ ] Comments describe **why**, not just **what** the next line does
