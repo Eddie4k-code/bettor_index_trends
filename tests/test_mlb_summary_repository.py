@@ -63,7 +63,7 @@ def test_returns_future_summaries_only(repo, db_session):
     )
     db_session.commit()
 
-    results = repo.get_mlb_summaries_from_after_now(now)
+    results = repo.get_summaries_from_after_now(now)
     event_ids = {summary.event_id for summary in results}
 
     assert event_ids == {"E1", "E2"}
@@ -79,7 +79,7 @@ def test_excludes_commence_time_equal_to_now(repo, db_session):
     )
     db_session.commit()
 
-    results = repo.get_mlb_summaries_from_after_now(now)
+    results = repo.get_summaries_from_after_now(now)
     event_ids = {summary.event_id for summary in results}
 
     assert event_ids == {"E2"}
@@ -95,7 +95,7 @@ def test_returns_empty_list_when_no_upcoming(repo, db_session):
     )
     db_session.commit()
 
-    results = repo.get_mlb_summaries_from_after_now(now)
+    results = repo.get_summaries_from_after_now(now)
 
     assert results == []
 
@@ -110,7 +110,7 @@ def test_orders_by_commence_time_asc(repo, db_session):
     )
     db_session.commit()
 
-    results = repo.get_mlb_summaries_from_after_now(now)
+    results = repo.get_summaries_from_after_now(now)
 
     assert [summary.event_id for summary in results] == ["E1", "E2"]
 
@@ -125,7 +125,7 @@ def test_logs_and_reraises_on_query_failure(repo, db_session, caplog):
         side_effect=SQLAlchemyError("connection lost"),
     ):
         with pytest.raises(SQLAlchemyError, match="connection lost"):
-            repo.get_mlb_summaries_from_after_now(now)
+            repo.get_summaries_from_after_now(now)
 
     assert "Failed to load upcoming MLB summaries" in caplog.text
     assert now.isoformat() in caplog.text
